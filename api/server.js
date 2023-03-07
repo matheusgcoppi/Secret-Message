@@ -2,6 +2,14 @@ const express = require('express');
 const router = require('./routes.js');
 const app = express();
 const port = process.env.PORT || 8000
+const cors = require('cors')
+
+app.use(cors({
+    allowedHeaders: '*',
+    allowMethods: '*',
+    origin: 'http://localhost:3000'
+})
+);
 
 app.use(express.json())
 

@@ -16,5 +16,12 @@ model UserInfo {
   name   String
   pin    String  @unique() @default(uuid())
   email  String?
-  pintwo String  @unique() @default(uuid())
+  pintwo String
+  text   String? @db.Text
+}
+
+model Text {
+  id   Int    @id() @default(autoincrement())
+  text String @db.Text
+  pin  String
 }

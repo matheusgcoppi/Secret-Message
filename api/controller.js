@@ -7,14 +7,14 @@ module.exports = {
     async createUser(req, res) {
         try {
             const {
-                name
-            } = req.body
-
-            
+                name,
+                pintwo
+            } = req.body     
 
             const user = await prisma.UserInfo.create({
                 data: {
-                    name                      
+                    name,
+                    pintwo                      
                 }
             });
 
@@ -27,14 +27,13 @@ module.exports = {
                     pin: realPin
                 },
                 data: {
-                    pin: realPin.slice(0,5),
-                    pintwo: realPinTwo.slice(0,6).replace(/\D/g, '')
+                    pin: realPin.slice(0,6)
+                    
                 }
             }) 
 
             console.log(newPin.pin, newPin.pintwo)
-
-            
+   
             const salt = await bcrypt.genSalt()
             
             const hash = await bcrypt.hash(newPin.pintwo, salt)   
@@ -47,8 +46,9 @@ module.exports = {
                     pintwo: hash
                 }
             }) 
+            console.log(pinEncrypted)
  
-            return res.send({"sucess" : pinEncrypted})
+            return res.send({pinEncrypted})
 
         } catch(error) {
             console.log(error)
@@ -83,6 +83,83 @@ module.exports = {
         catch(error) {
             console.log(error)
         }
+    },
+    async findUser (req, res) {
+        try {
+            const { pin } = req.params;
+            console.log(pin)
+            const user = await prisma.userInfo.findUnique({
+                where: {pin: pin}
+            })
 
+        if(!user) return res.json({error: "Não foi possivel encontrar este usuário"})
+            return res.json({user})
+
+        } catch (error) {
+            console.log(error)
+        }
+    },
+    async sendText (req, res) {
+        try {
+            const { pin } = req.params
+            const { text } = req.body
+            console.log(text)
+
+            const verifyUser = await prisma.UserInfo.findUnique({
+                where: {
+                    pin: pin
+                }
+            })
+    
+            if(verifyUser != null)  {
+                const updatePin = verifyUser.pin;
+
+                const createText = await prisma.Text.create({
+                    data: {  
+                        text: text,
+                        pin: updatePin
+                    }
+                }) 
+                res.json({createText})
+            }
+ 
+        else { 
+            res.json("error") 
+        }
+
+            
+        } catch (error) {
+            console.log(error)
+        }
+    },
+    async showText (req, res) {
+        try {
+            const { pin } = req.params
+
+            const verifyUser = await prisma.UserInfo.findUnique({
+                where: {
+                    pin: pin
+                }
+            })
+
+            if(verifyUser != null) {
+
+            const realPin = verifyUser.pin
+            
+            const ShowText = await prisma.Text.findMany({
+                where: {
+                    pin: realPin
+                }
+            })
+            res.json(ShowText)
+}
+           
+             else {
+                res.json("Does not found Text")
+            }
+            
+        } catch (error) {
+            console.log(error)
+        }
     }
 }
