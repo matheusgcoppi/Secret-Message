@@ -151,7 +151,7 @@ module.exports = {
                     pin: realPin
                 }
             })
-            res.json(ShowText)
+            res.json({"show" : ShowText})
 }
            
              else {
