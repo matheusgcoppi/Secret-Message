@@ -19,6 +19,7 @@ CREATE TABLE [dbo].[Text] (
     [id] INT NOT NULL IDENTITY(1,1),
     [text] TEXT NOT NULL,
     [pin] NVARCHAR(1000) NOT NULL,
+    [author] NVARCHAR(1000),
     CONSTRAINT [Text_pkey] PRIMARY KEY CLUSTERED ([id])
 );
 

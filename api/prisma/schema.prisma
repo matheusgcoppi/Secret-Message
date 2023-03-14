@@ -21,7 +21,8 @@ model UserInfo {
 }
 
 model Text {
-  id   Int    @id() @default(autoincrement())
-  text String @db.Text
-  pin  String
+  id     Int     @id() @default(autoincrement())
+  text   String  @db.Text
+  pin    String
+  author String?
 }
