@@ -161,5 +161,10 @@ module.exports = {
         } catch (error) {
             console.log(error)
         }
+    },
+    async setCookie (req, res) {
+        res.cookie('newUser', false)
+        res.cookie('isEmployee', true)
+        res.send('you got the cookies')
     }
 }

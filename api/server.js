@@ -3,6 +3,9 @@ const router = require('./routes.js');
 const app = express();
 const port = process.env.PORT || 8000
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
+
+app.use(cookieParser())
 
 app.use(cors({
     allowedHeaders: '*',
