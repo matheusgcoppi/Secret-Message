@@ -10,7 +10,8 @@ app.use(cookieParser())
 app.use(cors({
     allowedHeaders: '*',
     allowMethods: '*',
-    origin: 'http://localhost:3000'
+    origin: 'http://localhost:3000',
+    credentials: true
 })
 );
 
@@ -23,4 +24,5 @@ app.listen(port, () => {
 
 router.get("/", (req, res) => {
     return res.status(200).send("teste")
+
 })

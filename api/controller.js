@@ -1,7 +1,29 @@
-const { PrismaClient } = require("@prisma/client")
-const bcrypt = require('bcrypt')
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
+
+const verifyAuth = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    console.log(authHeader)
+    if(authHeader) {
+        const token = authHeader.split(" ")[1];
+        jwt.verify(token, "mySecretKey", (error, user) => {
+            if(error) {
+                return res.status(403).send("Token is not valid")
+            };
+            req.user = user;
+            next();
+        })
+    } else {
+        res.status(404).send("You're not authenticated")
+    }
+}
+
+module.exports = {
+    verifyAuth
+  }
 
 module.exports = {
     async createUser(req, res) {
@@ -21,7 +43,6 @@ module.exports = {
             const realPin = user.pin
             const realPinTwo = user.pintwo
             
-
             const newPin = await prisma.UserInfo.update({
                 where: {
                     pin: realPin
@@ -46,15 +67,17 @@ module.exports = {
                     pintwo: hash
                 }
             }) 
-            console.log(pinEncrypted)
- 
-            return res.send({pinEncrypted})
+            console.log(pinEncrypted);
+            const token = jwt.sign({pin: pinEncrypted.pin}, "mySecretKey");
+            res.send({
+                pinEncrypted,
+                token});
 
         } catch(error) {
             console.log(error)
         }
     },
-    async login(req, res) {
+     async login(req, res) {
         try {
    
            const { pin, pintwo } = req.body
@@ -84,8 +107,8 @@ module.exports = {
             console.log(error)
         }
     },
-    async findUser (req, res) {
-        try {
+     async findUser (req, res) {
+        try {   
             const { pin } = req.params;
             console.log(pin)
             const user = await prisma.userInfo.findUnique({
@@ -162,9 +185,20 @@ module.exports = {
             console.log(error)
         }
     },
-    async setCookie (req, res) {
-        res.cookie('newUser', false)
-        res.cookie('isEmployee', true)
-        res.send('you got the cookies')
+    async verifyAuth (req, res, next) {
+        const authHeader = req.headers.authorization;
+        console.log(authHeader)
+        if(authHeader) {
+            const token = authHeader.split(" ")[1];
+            jwt.verify(token, "mySecretKey", (error, user) => {
+                if(error) {
+                    return res.status(403).send("Token is not valid")
+                };
+                req.user = user;
+                next();
+            })
+        } else {
+            res.status(404).send("You're not authenticated")
+        }
     }
-}
+    }
