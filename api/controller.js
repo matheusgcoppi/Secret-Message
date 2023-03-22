@@ -4,26 +4,16 @@ const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 
-const verifyAuth = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    console.log(authHeader)
-    if(authHeader) {
-        const token = authHeader.split(" ")[1];
-        jwt.verify(token, "mySecretKey", (error, user) => {
-            if(error) {
-                return res.status(403).send("Token is not valid")
-            };
-            req.user = user;
-            next();
-        })
-    } else {
-        res.status(404).send("You're not authenticated")
-    }
+
+function generateAccessToken(pinEncrypted) {
+    return jwt.sign({pin: pinEncrypted.pin}, "mySecretKey", {expiresIn: "15m"});
 }
 
-module.exports = {
-    verifyAuth
-  }
+function generateRefreshToken(pinEncrypted) {
+    return jwt.sign({pin: pinEncrypted.pin}, "myRefreshSecretKey");
+}
+
+let refreshTokens = [];
 
 module.exports = {
     async createUser(req, res) {
@@ -41,7 +31,6 @@ module.exports = {
             });
 
             const realPin = user.pin
-            const realPinTwo = user.pintwo
             
             const newPin = await prisma.UserInfo.update({
                 where: {
@@ -68,10 +57,17 @@ module.exports = {
                 }
             }) 
             console.log(pinEncrypted);
-            const token = jwt.sign({pin: pinEncrypted.pin}, "mySecretKey");
+            const acessToken = generateAccessToken(pinEncrypted);
+            const refreshToken = generateRefreshToken(pinEncrypted);
+
+            refreshTokens.push(refreshToken)
+            console.log(refreshTokens)
+            
             res.send({
                 pinEncrypted,
-                token});
+                acessToken,
+                refreshToken
+            });
 
         } catch(error) {
             console.log(error)
@@ -200,5 +196,40 @@ module.exports = {
         } else {
             res.status(404).send("You're not authenticated")
         }
+    },
+    async refreshToken (req, res) {
+        //take the refresh token from the user    
+
+        const refreshToken = req.body.token
+        
+        
+        //send an error if the token is invalid or there is no token
+
+        if(!refreshToken) return res.status(401).send("You're not authenticated!")
+        if(!refreshTokens.includes(refreshToken)) return res.status(403).send("Refresh token is not valid!")
+        
+        jwt.verify(refreshToken, "myRefreshSecretKey", (err, user) => {
+            if(err) {
+                console.log(err)
+            }
+            refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+
+            const newAcessToken = generateAccessToken(user)
+            const newRefreshToken = generateRefreshToken(user)
+
+            refreshTokens.push(newRefreshToken);
+            console.log(refreshTokens)
+            console.log(newRefreshToken)
+            console.log(refreshToken)
+
+
+            res.status(200).send({
+                acessToken: newAcessToken,
+                refreshToken: newRefreshToken
+            })
+
+        })
+
+        //if everything is ok, create new access token, refresh token and send to the user
     }
     }
